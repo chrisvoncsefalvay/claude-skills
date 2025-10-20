@@ -13,8 +13,9 @@ import os
 import sys
 import re
 import shutil
+import subprocess
 from pathlib import Path
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Tuple
 
 
 def extract_yaml_preamble(skill_md_path: Path) -> Dict[str, str]:
@@ -118,8 +119,41 @@ def create_skill_zips(root_dir: Path, skills: List[Dict]):
     return True
 
 
+def get_github_repo_info() -> Tuple[Optional[str], Optional[str]]:
+    """Extract GitHub repository owner and name from git remote."""
+    try:
+        # Get the origin remote URL
+        result = subprocess.run(
+            ['git', 'config', '--get', 'remote.origin.url'],
+            capture_output=True,
+            text=True,
+            check=False
+        )
+
+        if result.returncode != 0 or not result.stdout.strip():
+            return None, None
+
+        remote_url = result.stdout.strip()
+
+        # Parse SSH or HTTPS URL
+        # SSH: git@github.com:owner/repo.git
+        # HTTPS: https://github.com/owner/repo.git
+        match = re.search(r'github\.com[:/]([^/]+)/(.+?)(?:\.git)?$', remote_url)
+        if match:
+            owner = match.group(1)
+            repo = match.group(2).replace('.git', '')
+            return owner, repo
+
+        return None, None
+    except Exception as e:
+        print(f"Warning: Could not extract GitHub repo info: {e}", file=sys.stderr)
+        return None, None
+
+
 def generate_readme(root_dir: Path, skills: List[Dict]) -> str:
     """Generate README.md content with skill listings."""
+    owner, repo = get_github_repo_info()
+
     lines = [
         "# Claude Skills\n",
         "A collection of Claude Code skills.\n",
@@ -130,11 +164,21 @@ def generate_readme(root_dir: Path, skills: List[Dict]) -> str:
         lines.append(f"### {skill['name']}\n")
         if skill['description']:
             lines.append(f"{skill['description']}\n")
-        lines.append(f"- **File**: `{skill['name']}.zip`\n")
+
+        # Generate download link
+        if owner and repo:
+            download_url = f"https://github.com/{owner}/{repo}/releases/download/latest/{skill['name']}.zip"
+            lines.append(f"[Download {skill['name']}.zip]({download_url})\n")
+        else:
+            lines.append(f"**File**: `{skill['name']}.zip`\n")
+
         lines.append("")
 
     lines.append("## Installation\n")
-    lines.append("Download any of the `.zip` files above to install a skill.\n")
+    if owner and repo:
+        lines.append("Click the download link above for each skill, or download from the [latest release](https://github.com/" + f"{owner}/{repo}" + "/releases/tag/latest).\n")
+    else:
+        lines.append("Download any of the `.zip` files above to install a skill.\n")
 
     return "\n".join(lines)
 

@@ -45,3 +45,26 @@ jobs:
           git add .
           git commit -m "chore: update skill zips and README"
           git push
+
+      - name: Upload skill zips as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: skill-zips
+          path: '*.zip'
+          retention-days: 30
+
+      - name: Create release with skill zips
+        if: steps.verify-changes.outputs.has_changes == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: '*.zip'
+          tag_name: latest
+          name: Latest Skills Build
+          body: |
+            Automatically generated skill package updates.
+            Download any `.zip` file to install the corresponding skill.
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
