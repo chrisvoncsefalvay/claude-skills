@@ -4,6 +4,13 @@ A collection of Claude Code skills.
 
 ## Available Skills
 
+### coeditor
+
+Build React applications with CopilotKit and LangGraph for AI-powered collaborative editing. Creates production-ready editor applications (text, document, or node-based) with real-time AI assistance, shared state management, and agentic workflows. Use this skill when users want to build intelligent editing interfaces with AI collaboration features.
+
+[Download coeditor.zip](https://github.com/chrisvoncsefalvay/claude-skills/releases/download/latest/coeditor.zip)
+
+
 ### electron-scaffold
 
 Scaffold a native-looking, effective Electron app with best practices baked in. Creates a production-ready Electron application with security hardening, modern tooling, proper IPC patterns, auto-updates, native UI elements, and optimal build configuration. Use this skill when users want to start a new Electron project or modernize an existing one.
